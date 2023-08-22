@@ -17,24 +17,21 @@
  */
 
 /* exported init */
-const { GObject, Gio, GLib, St } = imports.gi;
+import GLib from "gi://GLib";
+import GObject from "gi://GObject";
+import Gio from "gi://Gio";
+import St from "gi://St";
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const Gettext = imports.gettext;
-const Domain = Gettext.domain(Me.metadata.uuid);
-const _ = Domain.gettext;
-const ngettext = Domain.ngettext;
-
-const Main = imports.ui.main;
-const PopupMenu = imports.ui.popupMenu;
-const QuickSettings = imports.ui.quickSettings;
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import * as QuickSettings from 'resource:///org/gnome/shell/ui/quickSettings.js';
 
 // This is the live instance of the Quick Settings menu
 const QuickSettingsMenu = Main.panel.statusArea.quickSettings;
 
-const { Tailscale } = Me.imports.tailscale
+import { Tailscale } from "./tailscale.js";
 
 const TailscaleIndicator = GObject.registerClass(
   class TailscaleIndicator extends QuickSettings.SystemIndicator {
@@ -162,11 +159,7 @@ const TailscaleMenuToggle = GObject.registerClass(
   }
 );
 
-class Extension {
-  constructor(uuid) {
-    this._uuid = uuid;
-  }
-
+export default class TailscaleExtension extends Extension {
   enable() {
     const tailscale = new Tailscale();
     this._timerId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 10, () => {
@@ -175,7 +168,7 @@ class Extension {
       return GLib.SOURCE_CONTINUE;
     });
 
-    const icon = Gio.icon_new_for_string(`${Me.path}/icons/tailscale.svg`);
+    const icon = Gio.icon_new_for_string(`${path}/icons/tailscale.svg`);
 
     this._indicator = new TailscaleIndicator(icon, tailscale);
     QuickSettingsMenu._indicators.insert_child_at_index(this._indicator, 0);
@@ -198,9 +191,4 @@ class Extension {
     this._indicator.destroy();
     this._indicator = null;
   }
-}
-
-function init(meta) {
-  ExtensionUtils.initTranslations(Me.metadata.uuid);
-  return new Extension(meta.uuid);
 }
